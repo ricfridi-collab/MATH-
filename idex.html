@@ -282,6 +282,7 @@
         @keyframes scanLine { 0% {left: -100%} 100% {left: 100%} }
         #activation-code { width: 100%; padding: 15px; background: rgba(0,0,0,0.3); border: 2px solid var(--glass-border); border-radius: 12px; color: var(--accent-primary); font-size: 1.5rem; text-align: center; margin: 20px 0; letter-spacing: 5px; font-family: monospace; outline: none; }
         #activate-btn { width: 100%; padding: 15px; background: linear-gradient(90deg, var(--accent-secondary), var(--accent-primary)); border: none; border-radius: 12px; color: #fff; font-weight: 900; font-size: 1.1rem; cursor: pointer; transition: 0.3s; }
+        #activate-btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .app-footer { position: fixed; bottom: 10px; right: 90px; font-size: 0.6rem; color: var(--text-muted); opacity: 0.5; }
 
     </style>
@@ -295,9 +296,9 @@
     <div id="activation-screen">
         <div class="lock-container slide-up">
             <div class="lock-icon" style="font-size:3rem; margin-bottom:15px;">🔒</div>
-            <h2 style="margin-bottom:10px;"></h2>
+            <h2 style="margin-bottom:10px;">نظام التفعيل</h2>
             <p style="color:var(--text-muted); font-size:0.9rem;">أدخل كود التفعيل للمتابعة</p>
-            <input type="text" id="activation-code" placeholder="SMZ - XXXX" autocomplete="off" maxlength="15">
+            <input type="text" id="activation-code" placeholder="XXXX-XXXX" autocomplete="off" maxlength="20">
             <button id="activate-btn" onclick="verifyCode()">تفعيل النظام</button>
             <p id="activation-msg" style="margin-top:15px; height:20px; font-size:0.85rem; font-weight:bold;"></p>
         </div>
@@ -306,7 +307,7 @@
     <!-- 2. Ticker -->
     <div class="ticker-wrap">
         <div class="ticker">
-     
+            <!-- تمت إزالة النص لتركيز التطبيق على الوظائف -->
         </div>
     </div>
 
@@ -408,7 +409,7 @@
                 </div>
             </div>
 
-            <!-- SMART EXAM VIEW (UPDATED FONT) -->
+            <!-- SMART EXAM VIEW -->
             <div id="exam-view" class="hidden fade-in" style="height: 100%; padding: 0;">
                 <div id="exam-paper" class="exam-paper">
                     <!-- Content Injected via JS -->
@@ -468,39 +469,74 @@
 
     <script>
         // =========================================
+        // API CONFIGURATION (هام جداً)
+        // =========================================
+        const SHEETDB_API_ID = "at5vemf764m61";
+        // يجب عليك إنشاء مفتاح API (Read/Write) من لوحة تحكم SheetDB ولصقه هنا
+        // لكي يعمل نظام التحديث (One Time Use). بدون المفتاح سيقرأ البيانات فقط.
+        const SHEETDB_API_KEY = ""; // <--- الصق مفتاح API هنا
+
+        // =========================================
         // DATABASE (EXPANDED)
         // =========================================
         const DB = {
-            unit_01: [
+            unit_01: [ 
                 {q:"PGCD(120, 48)?", a:"24"}, {q:"بسط √18", a:"3√2"}, {q:"قيمة √144", a:"12"}, {q:"هل 15 و 28 أوليان؟", a:"نعم"}, 
                 {q:"بسط √75", a:"5√3"}, {q:"حل x² = 25", a:"5"}, {q:"مقلوب العدد √2", a:"√2/2"}, {q:"بسط √20 + √45", a:"5√5"}, 
                 {q:"نطق مقام 1/√5", a:"√5/5"}, {q:"PGCD(81, 27)", a:"27"}, {q:"بسط √200", a:"10√2"}, {q:"اكتب 5√2 على شكل جذر", a:"√50"},
-                {q:"PGCD(50, 45)", a:"5"}, {q:"هل 13 عددا أوليا؟", a:"نعم"}, {q:"قيمة √0.25", a:"0.5"}, {q:"بسط √32", a:"4√2"}
+                {q:"PGCD(50, 45)", a:"5"}, {q:"هل 13 عددا أوليا؟", a:"نعم"}, {q:"قيمة √0.25", a:"0.5"}, {q:"بسط √32", a:"4√2"},
+                {q:"اكتب على صورة أسس: 2×2×2×2", a:"2⁴"}, {q:"بسط √12", a:"2√3"}, {q:"PGCD(45, 60)", a:"15"}, {q:"حساب 2² + 3²", a:"13"},
+                {q:"بسط √27", a:"3√3"}, {q:"هل 9 و 16 أوليان؟", a:"نعم"}, {q:"حساب 10³ × 10²", a:"10⁵"}, {q:"ناتج 3⁴", a:"81"},
+                {q:"قيمة √(4×9)", a:"6"}, {q:"نطق 3/√3", a:"√3"}, {q:"حل x² = 1", a:"1"}, {q:"هل 2 و 4 أوليان؟", a:"لا"},
+                {q:"بسط √50", a:"5√2"}, {q:"قيمة √(16+9)", a:"5"}, {q:"اكتب √8 على صورة a√b", a:"2√2"}, {q:"حساب 2⁵", a:"32"},
+                {q:"العدد 11: أولي أم مركب؟", a:"أولي"}, {q:"بسط √8 + √18", a:"5√2"}, {q:"مقلوب √3", a:"√3/3"}, {q:"PGCD(100, 25)", a:"25"},
+                {q:"حساب √49", a:"7"}, {q:"اكتب 1000 على صورة أس", a:"10³"}, {q:"هل 1 عددا أوليا؟", a:"لا"}, {q:"بسط √72", a:"6√2"},
+                {q:"ناتج 3×3×3×3×3", a:"3⁵"}, {q:"بسط √300", a:"10√3"}, {q:"قيمة √(25/4)", a:"5/2"}
             ],
-            unit_03: [
+            unit_03: [ 
                 {q:"انشر (x+3)²", a:"x²+6x+9"}, {q:"حل 3x = 12", a:"4"}, {q:"انشر (x-2)(x+2)", a:"x²-4"}, {q:"بسط: 5x + 2x - x", a:"6x"}, 
                 {q:"حل x + 9 = 4", a:"-5"}, {q:"تحليل: x² + 2x", a:"x(x+2)"}, {q:"حل المتراجحة 2x > 4", a:"x>2"}, {q:"قيمة 2x² عند x=3", a:"18"}, 
                 {q:"حل 4x = 2", a:"0.5"}, {q:"انشر (x-4)²", a:"x²-8x+16"}, {q:"حل 5x + 1 = 3x + 9", a:"4"}, {q:"انشر 2(x-5)", a:"2x-10"},
-                {q:"حل -3x = 15", a:"-5"}, {q:"بسط 3x - 5x", a:"-2x"}, {q:"مربع 3x هو", a:"9x²"}
+                {q:"حل -3x = 15", a:"-5"}, {q:"بسط 3x - 5x", a:"-2x"}, {q:"مربع 3x هو", a:"9x²"}, {q:"انشر (2x+1)(2x-1)", a:"4x²-1"},
+                {q:"انشر (2x + 1)²", a:"4x²+4x+1"}, {q:"حل 5x - 10 = 0", a:"2"}, {q:"تحليل x² - 25", a:"(x-5)(x+5)"}, {q:"حل 2x + 4 = 10", a:"3"},
+                {q:"انشر (x - 5)(x + 5)", a:"x²-25"}, {q:"حل x/3 = 6", a:"18"}, {q:"بسط 4x² × 3x", a:"12x³"}, {q:"حل المتراجحة x + 3 > 5", a:"x>2"},
+                {q:"انشر (x + 1)³", a:"x³+3x²+3x+1"}, {q:"حل 7x = 0", a:"0"}, {q:"تحليل 3x - 9", a:"3(x-3)"}, {q:"حل -2x > 8", a:"x<-4"},
+                {q:"قيمة x عند 2x + 5 = 5", a:"0"}, {q:"انشر (a+b)²", a:"a²+2ab+b²"}, {q:"حل 1/2 x = 4", a:"8"}, {q:"تحليل x² - 16", a:"(x-4)(x+4)"},
+                {q:"بسط (x+2)+(x-2)", a:"2x"}, {q:"حل 3x + 4 = 2x + 10", a:"6"}, {q:"انشر (x - 1)²", a:"x²-2x+1"}, {q:"حل 4x - 2 = 2(x+3)", a:"4"},
+                {q:"تحليل x(x+1) + 2(x+1)", a:"(x+1)(x+2)"}, {q:"حل 10 - x > 2", a:"x<8"}, {q:"قيمة 3x عند x= -2", a:"-6"}, {q:"انشر -2(x-3)", a:"-2x+6"},
+                {q:"حل المعادلة x² = 0", a:"0"}, {q:"انشر (3x-2)²", a:"9x²-12x+4"}, {q:"حل x² = 49", a:"7"}, {q:"تحليل 100 - x²", a:"(10-x)(10+x)"}
             ],
-            unit_05: [
+            unit_05: [ 
                 {q:"فيثاغورس: AB=6, AC=8, BC=؟", a:"10"}, {q:"Cos(0°)", a:"1"}, {q:"Sin(30°)", a:"0.5"}, {q:"مجموع زوايا المربع؟", a:"360"}, 
                 {q:"الوتر في المثلث القائم هو...", a:"الأطول"}, {q:"مساحة الدائرة: π × ...²", a:"نصف القطر"}, {q:"Cos²x + Sin²x =", a:"1"}, {q:"Tan(45°)", a:"1"}, 
                 {q:"قطر الدائرة المحيطة بمثلث قائم هو...", a:"الوتر"}, {q:"الزاوية المنفرجة أكبر من...", a:"90"}, {q:"Sin(90°)", a:"1"}, {q:"Cos(90°)", a:"0"},
-                {q:"مجموع زوايا المثلث؟", a:"180"}, {q:"قاعدة طالس: AB/AC = .../...", a:"AD/AE"}, {q:"نصف قطر الدائرة = نصف ...", a:"القطر"}
+                {q:"مجموع زوايا المثلث؟", a:"180"}, {q:"قاعدة طالس: AB/AC = .../...", a:"AD/AE"}, {q:"نصف قطر الدائرة = نصف ...", a:"القطر"}, {q:"قاعدة طالس العكسية تثبت...", a:"الاستواء"},
+                {q:"Sin(45°)", a:"0.707"}, {q:"Cos(60°)", a:"0.5"}, {q:"Tan(30°)", a:"0.577"}, {q:"الزاوية المركزية تساوي ... الزاوية المحيطية", a:"ضعف"},
+                {q:"في المثلث القائم: الوتر² = ...", a:"الضلعين²"}, {q:"مجموع زوايا السداسي؟", a:"720"}, {q:"الزاوية الحادة أصغر من...", a:"90"},
+                {q:"Tan(0°)", a:"0"}, {q:"محيط الدائرة = 2 × π × ...", a:"نصف القطر"}, {q:"إذا كان cosA = 0.5 فالزاوية A=", a:"60"}, {q:"Sin(60°)", a:"0.866"},
+                {q:"الشكل الذي له 4 أضلاع متساوية هو...", a:"المعين أو المربع"}, {q:"مجموع زوايا الرباعي؟", a:"360"}, {q:"الزاوية القائمة تساوي...", a:"90"},
+                {q:"قطر المربع يحدد زاويتين...", a:"قائمتين"}, {q:"المستقيم المماس للدائرة يشكل زاوية مع نصف القطر...", a:"قائمة"}, {q:"المثلث متساوي الساقين له ... زاويتين متساويتين", a:"قاعدتين"},
+                {q:"نصف مجموع القاعدتين في شبه المنحرف هو الـ...", a:"المتوسط"}, {q:"مساحة المربع = ...²", a:"الضلع"}, {q:"إذا كان AB=5 و AC=12 في مثلث قائم فالوتر=؟", a:"13"}
             ],
-            unit_08: [
+            unit_08: [ 
                 {q:"f(x)=3x هي دالة...", a:"خطية"}, {q:"f(x)=2x+5 هي دالة...", a:"تآلفية"}, {q:"صورة 2 بالدالة f(x)=4x", a:"8"}, {q:"معامل الدالة f(x)=-x", a:"-1"}, 
                 {q:"f(0) في الدالة الخطية =", a:"0"}, {q:"صورة 1 بـ f(x)=x+3", a:"4"}, {q:"ميل الدالة f(x)=2x-1", a:"2"}, {q:"تمثيل الدالة الخطية يمر بـ...", a:"المبدأ"}, 
                 {q:"صورة -3 بـ f(x)=2x", a:"-6"}, {q:"إذا كان f(2)=6 في خطية فالدالة f(x)=", a:"3x"}, {q:"الدالة f(x)=x² تسمى...", a:"تربيعية"}, {q:"صورة 0 بـ f(x)=2x+1", a:"1"},
-                {q:"الدالة الثابتة لها ميل...", a:"0"}, {q:"حل f(x)=0 بـ f(x)=x-3", a:"3"}, {q:"إذا كان a>0 فالدالة الخطية...", a:"تزايدية"}
+                {q:"الدالة الثابتة لها ميل...", a:"0"}, {q:"حل f(x)=0 بـ f(x)=x-3", a:"3"}, {q:"إذا كان a>0 فالدالة الخطية...", a:"تزايدية"}, {q:"إذا كان a<0 فالدالة الخطية...", a:"تناقصية"},
+                {q:"سابقة العدد 5 في f(x)=x+1", a:"4"}, {q:"الدالة f(x)=5 تسمى...", a:"ثابتة"}, {q:"صورة 3 في f(x)=2x+2", a:"8"},
+                {q:"المعامل b في f(x)=ax+b هو...", a:"الإحداثي الصادي للتأشير"}, {q:"حل f(x)=g(x) يعني...", a:"إحداثي تقاطع البيانيين"},
+                {q:"الدالة f(x)=-2x+1 هي...", a:"تناقصية"}, {q:"نقطة التأشير لـ f(x)=x-2", a:"(0, -2)"}, {q:"ميل الدالة y=x", a:"1"},
+                {q:"سابقة 0 في f(x)=3x", a:"0"}, {q:"إذا كان f(1)=5 و f(0)=2 فالدالة f(x)=", a:"3x+2"}, {q:"الدالة f(x)=-3 هي...", a:"ثابتة"},
+                {q:"الميل هو عدد... من الدرجة الأولى", a:"المعامل"}, {q:"نقطة تقاطع y=-x و y=3x", a:"0"}, {q:"صورة -2 بـ f(x)=-x", a:"2"},
+                {q:"الدالة التزايدية يكون ميلها...", a:"موجب"}, {q:"سابقة 4 في f(x)=x+3", a:"1"}, {q:"الدالة الخطية تمر دائماً بنقطة...", a:"المبدأ O(0,0)"},
+                {q:"في f(x)=ax+b، a هو ...", a:"الميل"}, {q:"إذا تزايدت x وازدادت f(x) فهي دالة...", a:"تزايدية"}, {q:"التمثيل البياني للدالة التآلفية هو...", a:"مستقيم"}
             ],
             video_questions: [ 
                 {q:"ما هي قيمة cos(0°)؟", a:"1"}, {q:"نقطة تقاطع y=2x مع المحور الصادي؟", a:"0"}, {q:"الجذر التربيعي للعدد 16 هو؟", a:"4"},
                 {q:"حل المعادلة 3x = 9", a:"3"}, {q:"مجموع زوايا المثلث؟", a:"180"}
             ]
         };
-
+         
         let currentState = {
             mode: 'dashboard',
             score: 0,
@@ -509,7 +545,7 @@
             questions: [],
             videoTimer: null,
             isFocusMode: false,
-            examModel: null // To store current exam data
+            examModel: null 
         };
 
         // Utility: Toast
@@ -521,7 +557,19 @@
         }
 
         // =========================================
-        // SMART EXAM GENERATOR LOGIC (UPDATED)
+        // DEVICE ID GENERATOR
+        // =========================================
+        function getDeviceId() {
+            let did = localStorage.getItem('bem_device_id');
+            if (!did) {
+                did = 'dev-' + Math.random().toString(36).substr(2, 9) + '-' + Date.now().toString().substr(-4);
+                localStorage.setItem('bem_device_id', did);
+            }
+            return did;
+        }
+
+        // =========================================
+        // SMART EXAM GENERATOR LOGIC
         // =========================================
         function generateOfficialExam() {
             document.getElementById('dashboard-view').classList.add('hidden');
@@ -531,18 +579,14 @@
             document.getElementById('exam-result').classList.remove('active');
             document.getElementById('btn-grade').style.display = 'flex';
 
-            // 1. Random Selection Logic
-            // Pick 3 from Num, 3 from Alg, then mix Geo/Func
             const getQs = (cat, n) => [...DB[cat]].sort(() => 0.5 - Math.random()).slice(0, n);
             
             const paper = document.getElementById('exam-paper');
             const modelNum = Math.floor(Math.random() * 5000) + 1000; 
-            const dateStr = new Date().toLocaleDateString('ar-DZ');
 
             let html = `
                 <div class="official-header">
                     <div class="official-title">امتحان الرياضيات - شهادة التعليم المتوسط</div>
-                    
                     <div class="official-meta">
                         <span>المادة: الرياضيات</span>
                         <span>المعامل: 1</span>
@@ -552,19 +596,15 @@
             `;
 
             currentState.examModel = [];
-            let globalIndex = 0;
 
-            // Ex 01: Always Numbers (3 questions = 6 points)
             const ex1Qs = getQs('unit_01', 3);
             html += buildExerciseHTML(1, "الأعداد والحساب", ex1Qs);
             currentState.examModel.push(...ex1Qs);
 
-            // Ex 02: Always Algebra (3 questions = 6 points)
             const ex2Qs = getQs('unit_03', 3);
             html += buildExerciseHTML(2, "الحساب الحرفي", ex2Qs);
             currentState.examModel.push(...ex2Qs);
 
-            // Random choice for Ex 03 and 04 (2 questions each = 8 points)
             const isGeoFirst = Math.random() > 0.5;
 
             if(isGeoFirst) {
@@ -598,7 +638,6 @@
                     </div>
             `;
             
-            // Need current global count to generate unique IDs
             const currentCount = currentState.examModel.length;
 
             questions.forEach((q, idx) => {
@@ -620,7 +659,7 @@
         function gradeExam() {
             const inputs = document.querySelectorAll('.exam-input');
             let score = 0;
-            const total = currentState.examModel.length * 2; // 2 points per question
+            const total = currentState.examModel.length * 2; 
             let allAnswered = true;
 
             inputs.forEach(input => {
@@ -637,9 +676,8 @@
                 const correctVal = input.dataset.ans.trim().toLowerCase().replace(/\s+/g, '');
                 const userVal = input.value.trim().toLowerCase().replace(/\s+/g, '');
 
-                input.disabled = true; // Lock inputs
+                input.disabled = true; 
                 
-                // Matching Logic
                 let isCorrect = false;
                 if (userVal === correctVal) isCorrect = true;
                 else if (correctVal.includes(userVal) && userVal.length > 0) {
@@ -656,7 +694,6 @@
                 }
             });
 
-            // Show Result Overlay
             document.getElementById('score-display').innerHTML = `${score}<span>/20</span>`;
             
             const msg = document.getElementById('score-msg');
@@ -666,7 +703,7 @@
             else msg.innerText = "يجب عليك المراجعة 📚";
 
             document.getElementById('exam-result').classList.add('active');
-            document.getElementById('btn-grade').style.display = 'none'; // Hide submit button
+            document.getElementById('btn-grade').style.display = 'none'; 
         }
 
         function hideResult() {
@@ -674,7 +711,7 @@
         }
 
         // =========================================
-        // VIDEO & QUIZ LOGIC (Existing)
+        // VIDEO & QUIZ LOGIC
         // =========================================
         function openVideoRoom() {
             document.getElementById('dashboard-view').classList.add('hidden');
@@ -783,7 +820,6 @@
 
             if (navigator.vibrate) navigator.vibrate(50);
 
-            // Flexible matching
             const isCorrect = (correct.includes(userIn) && userIn.length > 0) || (userIn === correct);
 
             if (isCorrect) {
@@ -822,27 +858,126 @@
             else msgEl.innerText = "لا تستسلم، حاول مرة أخرى 🧠";
         }
 
-        // Activation
-        window.onload = function() {
-            if (localStorage.getItem('hunter_math_activated')) {
+        // =========================================
+        //  API VERIFICATION LOGIC
+        // =========================================
+        
+        async function verifyCode() {
+            const inputEl = document.getElementById('activation-code');
+            const btn = document.getElementById('activate-btn');
+            const msgEl = document.getElementById('activation-msg');
+            const code = inputEl.value.trim();
+            
+            if(!code) {
+                msgEl.style.color = "var(--danger)";
+                msgEl.innerText = "الرجاء إدخال الكود";
+                return;
+            }
+
+            // UI Loading State
+            const originalBtnText = btn.innerText;
+            btn.innerText = "جاري التحقق...";
+            btn.disabled = true;
+            msgEl.style.color = "var(--text-muted)";
+            msgEl.innerText = "الاتصال بالسيرفر...";
+
+            try {
+                // 1. البحث عن الكود في قاعدة البيانات
+                const searchUrl = `https://sheetdb.io/api/v1/${SHEETDB_API_ID}/search?code=${encodeURIComponent(code)}`;
+                const response = await fetch(searchUrl);
+                const data = await response.json();
+
+                if (data.length === 0) {
+                    throw new Error("الكود غير صحيح");
+                }
+
+                const row = data[0];
+                const myDeviceId = getDeviceId();
+
+                // 2. التحقق من حالة الاستخدام
+                if (row.status === 'used') {
+                    if (row.device_id === myDeviceId) {
+                        // الكود مستخدم ولكن على نفس الجهاز - مسموح
+                        activateAppSuccessfully();
+                        return;
+                    } else {
+                        throw new Error("هذا الكود مستخدم بالفعل على جهاز آخر");
+                    }
+                }
+
+                // 3. الكود جديد وصالح - تفعيله
+                // ملاحظة: يتطلب هذا SHEETDB_API_KEY ليكون صحيحاً ولديه صلاحيات الكتابة
+                if (!SHEETDB_API_KEY) {
+                    // وضع محاكاة في حالة عدم وجود مفتاح API للقراءة فقط
+                    console.warn("No API Key provided. Activation simulated locally.");
+                    // لا نقوم بالتحديث الفعلي، لكن ندخل التطبيق
+                    activateAppSuccessfully(); 
+                    return;
+                }
+
+                // إرسال طلب تحديث (PATCH)
+                // نفترض أن الصف الأول يحتوي على الـ headers: code, status, device_id
+                const updateUrl = `https://sheetdb.io/api/v1/${SHEETDB_API_ID}/id/${row.id}?apikey=${SHEETDB_API_KEY}`;
+                
+                const updateResponse = await fetch(updateUrl, {
+                    method: 'PATCH',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        data: {
+                            "status": "used",
+                            "device_id": myDeviceId
+                        }
+                    })
+                });
+
+                if (updateResponse.ok) {
+                    activateAppSuccessfully();
+                } else {
+                    throw new Error("فشل تحديث البيانات (تأكد من مفتاح API)");
+                }
+
+            } catch (error) {
+                console.error(error);
+                msgEl.style.color = "var(--danger)";
+                msgEl.innerText = error.message || "حدث خطأ في الاتصال";
+                btn.innerText = originalBtnText;
+                btn.disabled = false;
+            }
+        }
+
+        function activateAppSuccessfully() {
+            const msgEl = document.getElementById('activation-msg');
+            const btn = document.getElementById('activate-btn');
+            
+            msgEl.style.color = "var(--success)";
+            msgEl.innerText = "تم التفعيل بنجاح!";
+            
+            localStorage.setItem('bem_activated_code', document.getElementById('activation-code').value);
+            
+            setTimeout(() => {
                 document.getElementById('activation-screen').style.display = 'none';
                 document.getElementById('app-shell').classList.remove('hidden');
-            } else {
-                document.getElementById('app-shell').classList.add('hidden');
+            }, 1000);
+        }
+
+        // Initialization
+        window.onload = function() {
+            const savedCode = localStorage.getItem('bem_activated_code');
+            // إذا كان هناك كود محفوظ، يمكننا محاولة الدخول مباشرة
+            // لكن للأمان، نتحقق مرة أخرى إذا أمكن، أو ندخل مباشرة لتجربة المستخدم
+            if (savedCode) {
+                // إعادة التحقق السريع (اختياري) أو الدخول المباشر
+                // للتبسيط هنا: ندخل مباشرة إذا كان موجوداً
+                // document.getElementById('activation-code').value = savedCode;
+                // verifyCode(); 
+                // أو الدخول المباشر:
+                document.getElementById('activation-screen').style.display = 'none';
+                document.getElementById('app-shell').classList.remove('hidden');
             }
         };
-        
-        function verifyCode() {
-             const input = document.getElementById('activation-code').value.trim().toUpperCase();
-             if(input === "ADMIN") {
-                localStorage.setItem('hunter_math_activated', 'true');
-                document.getElementById('activation-screen').style.display = 'none';
-                document.getElementById('app-shell').classList.remove('hidden');
-             } else {
-                 document.getElementById('activation-msg').style.color = "var(--danger)";
-                 document.getElementById('activation-msg').innerText = "كود غير صالح";
-             }
-        }
         
         document.getElementById('userInput').addEventListener('keypress', function (e) { if (e.key === 'Enter') checkAnswer(); });
 
