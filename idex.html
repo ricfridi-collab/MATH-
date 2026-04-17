@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>| Dr. Chouidira - Smart Exams BEM| </title>
+    <!-- تم تغيير الخط إلى Tajawal ليكون أنظف للنماذج الرقمية -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* =========================================
+           1. ROOT VARIABLES & GLOBAL SETUP
+           ========================================= */
+        :root {
+            --bg-dark: #0f0c29;
+            --bg-gradient: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --accent-primary: #00f2ff;
+            --accent-secondary: #7000ff;
+            --success: #00ff88;
+            --danger: #ff4757;
+            --text-main: #ffffff;
+            --text-muted: #a0a0b0;
+            --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            --transition-speed: 0.4s;
+            --youtube-red: #ff0000;
+            --paper-bg: #fdfdfd;
+            --paper-text: #212121;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; user-select: none; }
+        
+        body {
+            font-family: 'Tajawal', sans-serif; /* تغيير الخط للجسم */
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Scrollbar hiding */
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+
+        .hidden { display: none !important; }
+        .fade-in { animation: fadeIn 0.5s ease forwards; }
+        .slide-up { animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+        .pulse { animation: pulse-glow 2s infinite; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse-glow { 0% { box-shadow: 0 0 5px var(--youtube-red); } 50% { box-shadow: 0 0 20px var(--youtube-red), 0 0 10px var(--youtube-red); } 100% { box-shadow: 0 0 5px var(--youtube-red); } }
+
+        /* =========================================
+           2. UI COMPONENTS (Shared)
+           ========================================= */
+        .ticker-wrap { width: 100%; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--glass-border); height: 40px; overflow: hidden; display: flex; align-items: center; }
+        .ticker { display: inline-block; padding-left: 100%; animation: ticker 25s linear infinite; color: var(--accent-primary); font-weight: 600; font-size: 0.9rem; }
+        @keyframes ticker { 100% { transform: translate3d(-100%, 0, 0); } }
+
+        .app-shell { display: flex; height: calc(100vh - 40px); overflow: hidden; }
+        .sidebar { width: 70px; background: rgba(0,0,0,0.2); display: flex; flex-direction: column; align-items: center; padding-top: 20px; border-left: 1px solid var(--glass-border); z-index: 100; }
+        .brand-logo { width: 45px; height: 45px; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); border-radius: 12px; margin-bottom: 30px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.2rem; box-shadow: 0 0 15px rgba(0,242,255,0.4); }
+        .nav-icon { font-size: 1.8rem; color: var(--text-muted); margin-bottom: 30px; cursor: pointer; transition: 0.3s; position: relative; }
+        .nav-icon:hover { color: #fff; transform: scale(1.1); }
+        .nav-icon.active { color: var(--text-main); text-shadow: 0 0 10px var(--accent-primary); }
+        .nav-icon.active::after { content: ''; position: absolute; right: -15px; top: 50%; transform: translateY(-50%); width: 5px; height: 5px; background: var(--accent-primary); border-radius: 50%; box-shadow: 0 0 10px var(--accent-primary); }
+
+        .main-area { flex: 1; padding: 20px; overflow-y: auto; position: relative; }
+        
+        /* Header */
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .user-badge { background: var(--glass-bg); padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; border: 1px solid var(--glass-border); color: var(--accent-primary); }
+
+        /* Cards */
+        .dashboard-grid { display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 500px; margin: 0 auto; }
+        .card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 20px; padding: 20px; display: flex; align-items: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); position: relative; overflow: hidden; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); border-color: var(--accent-primary); }
+        .card:active { transform: scale(0.98); }
+        .card-icon-box { width: 60px; height: 60px; border-radius: 16px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; margin-left: 20px; transition: 0.3s; }
+        .card:hover .card-icon-box { background: var(--accent-primary); color: #000; transform: rotate(10deg); }
+        .card-title { font-size: 1.2rem; font-weight: 800; margin-bottom: 5px; color: #fff; font-family: 'Tajawal', sans-serif; }
+        .card-sub { font-size: 0.85rem; color: var(--text-muted); }
+
+        /* Special Cards */
+        .card-exam { background: linear-gradient(135deg, rgba(112, 0, 255, 0.2), rgba(0, 242, 255, 0.1)); border: 1px solid var(--accent-secondary); }
+        .card-exam .card-icon-box { background: var(--accent-secondary); color: #fff; }
+        
+        .card-video { background: linear-gradient(135deg, rgba(255, 0, 0, 0.15), rgba(50, 0, 0, 0.2)); border: 1px solid var(--youtube-red); }
+        .card-video .card-icon-box { background: var(--youtube-red); color: #fff; }
+        .card-video:hover .card-icon-box { background: #fff; color: var(--youtube-red); }
+
+        .card-official { 
+            background: linear-gradient(135deg, #fff, #f0f0f0); 
+            border: 2px solid #fff; 
+        }
+        .card-official .card-title { color: #333; }
+        .card-official .card-sub { color: #666; }
+        .card-official .card-icon-box { background: #333; color: #fff; }
+
+        /* =========================================
+           3. SMART EXAM PAPER STYLES (UPDATED FONT)
+           ========================================= */
+        #exam-view { display: flex; flex-direction: column; height: 100%; align-items: center; padding: 0; background: #e0e0e0; border-radius: 10px; overflow: hidden; }
+        
+        .exam-paper {
+            background: var(--paper-bg);
+            color: var(--paper-text);
+            font-family: 'Tajawal', sans-serif; /* خط واضح ونظيف للورقة */
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            padding: 40px 30px;
+            position: relative;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.05);
+            user-select: text;
+        }
+
+        /* Official Header */
+        .official-header {
+            text-align: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .official-title { font-size: 1.6rem; font-weight: 800; margin-bottom: 5px; }
+        .official-subtitle { font-size: 1rem; color: #444; font-weight: 600; }
+        .official-meta { display: flex; justify-content: space-between; margin-top: 15px; font-size: 0.9rem; font-weight: 700; background: #f5f5f5; padding: 10px; border-radius: 8px; }
+
+        /* Exercise Sections */
+        .exercise-section {
+            margin-bottom: 35px;
+            background: #fff;
+            border-radius: 8px;
+            page-break-inside: avoid;
+        }
+        
+        .exercise-header {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-right: 5px solid #333;
+            font-weight: 800;
+            font-size: 1.15rem;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #000;
+        }
+        
+        .exercise-badge {
+            background: #333; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem;
+        }
+
+        .question-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 1.05rem;
+            line-height: 1.8;
+            padding: 0 5px;
+        }
+
+        .q-number { font-weight: 800; color: var(--accent-secondary); margin-left: 10px; min-width: 25px; }
+        .q-text { flex: 1; }
+
+        .exam-input {
+            border: none;
+            border-bottom: 2px solid #ccc; /* خط سفلي بسيط كما في الصورة */
+            background: #f9f9f9;
+            font-family: 'Tajawal', sans-serif; /* الخط الموحد */
+            font-size: 1.1rem;
+            color: #000; /* اللون أسود عادي كما في الصورة */
+            text-align: center;
+            width: 140px;
+            padding: 5px;
+            border-radius: 4px;
+            outline: none;
+            transition: 0.3s;
+            direction: ltr; 
+        }
+        .exam-input:focus { border-bottom-color: var(--accent-primary); background: #fff; box-shadow: 0 0 0 3px rgba(0,242,255,0.1); }
+
+        /* Correction Feedback */
+        .feedback-box {
+            display: flex;
+            align-items: center;
+            margin-right: 10px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            opacity: 0;
+            transition: 0.3s;
+        }
+        .graded .feedback-box { opacity: 1; }
+
+        .input-correct { border-bottom-color: var(--success) !important; color: var(--success) !important; background: rgba(0,255,136,0.05) !important; }
+        .input-wrong { border-bottom-color: var(--danger) !important; color: var(--danger) !important; background: rgba(255,71,87,0.05) !important; text-decoration: line-through; }
+        .correct-text { color: var(--success); margin-left: 5px; }
+        .wrong-text { color: var(--danger); margin-left: 5px; }
+
+        /* Exam Toolbar */
+        .exam-controls {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: #fff;
+            padding: 15px;
+            border-top: 1px solid #ddd;
+            display: flex; justify-content: center; gap: 20px;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+            z-index: 200;
+        }
+        .btn-exam { 
+            padding: 12px 30px; border-radius: 30px; border: none; font-weight: bold; font-family: 'Tajawal', sans-serif; cursor: pointer; font-size: 1rem; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: 0.2s;
+        }
+        .btn-submit { background: var(--success); color: #fff; }
+        .btn-cancel { background: var(--danger); color: #fff; }
+        .btn-new { background: var(--accent-primary); color: #000; }
+
+        /* Result Overlay */
+        .result-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.95);
+            z-index: 50;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: 0.4s;
+            text-align: center;
+        }
+        .result-overlay.active { opacity: 1; pointer-events: auto; }
+        .final-score { font-size: 4rem; font-weight: 900; color: var(--accent-primary); line-height: 1; margin-bottom: 10px; }
+        .final-score span { font-size: 1.5rem; color: #999; }
+
+        /* =========================================
+           4. OTHER VIEWS (Video & Quiz)
+           ========================================= */
+        #video-room { display: flex; flex-direction: column; height: 100%; padding: 0; position: relative; }
+        .video-container { width: 100%; height: 100%; background: #000; position: relative; display: flex; align-items: center; justify-content: center; }
+        .iframe-wrapper { width: 100%; height: 100%; position: relative; transition: transform 0.3s ease; }
+        .video-wrapper iframe { width: 100%; height: 100%; border: none; }
+        .video-controls { position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); padding: 20px; display: flex; justify-content: space-between; align-items: center; z-index: 20; transform: translateY(100%); transition: transform 0.3s ease; }
+        .video-container:hover .video-controls { transform: translateY(0); }
+        .v-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: 'Tajawal', sans-serif; }
+        .v-btn:hover { background: var(--accent-primary); color: #000; }
+
+        .active-learning-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 12, 41, 0.95); backdrop-filter: blur(15px); z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; text-align: center; opacity: 0; pointer-events: none; transition: 0.4s; }
+        .active-learning-overlay.active { opacity: 1; pointer-events: auto; }
+        .al-question { font-size: 1.5rem; font-weight: 900; color: #fff; margin-bottom: 20px; border: 2px solid var(--accent-primary); padding: 20px; border-radius: 15px; box-shadow: 0 0 20px rgba(0,242,255,0.2); }
+        .al-timer { font-size: 3rem; font-weight: 900; color: var(--youtube-red); margin-bottom: 20px; }
+        .al-input { width: 80%; max-width: 300px; padding: 15px; border-radius: 10px; border: none; font-size: 1.2rem; text-align: center; outline: none; margin-bottom: 10px; }
+
+        /* Quiz View */
+        .quiz-stats { display: flex; justify-content: space-between; width: 100%; max-width: 500px; margin-bottom: 20px; }
+        .stat-box { background: var(--glass-bg); border: 1px solid var(--glass-border); padding: 10px 20px; border-radius: 15px; display: flex; align-items: center; gap: 10px; }
+        .score-val { font-size: 1.5rem; font-weight: 900; color: var(--accent-primary); }
+        .question-container { flex: 1; width: 100%; max-width: 500px; display: flex; flex-direction: column; justify-content: center; }
+        .q-text { font-size: 1.6rem; font-weight: 800; text-align: center; margin-bottom: 30px; line-height: 1.4; color: #000; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+        .main-input { width: 100%; padding: 20px; background: rgba(0,0,0,0.4); border: 2px solid var(--glass-border); border-radius: 20px; color: #fff; font-size: 1.5rem; text-align: center; font-family: 'Tajawal', sans-serif; outline: none; margin-bottom: 20px; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
+        .submit-btn { width: 100%; padding: 20px; background: var(--accent-primary); color: #000; font-weight: 900; font-size: 1.2rem; border: none; border-radius: 20px; cursor: pointer; box-shadow: 0 5px 15px rgba(0,242,255,0.3); }
+        .progress-container { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin: 20px 0; overflow: hidden; }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary)); width: 0%; transition: width 0.5s ease; }
+
+        /* Focus Mode */
+        .focus-mode-active .sidebar, .focus-mode-active .ticker-wrap { display: none; }
+        .focus-mode-active .app-shell { height: 100vh; }
+        .focus-mode-active .main-area { padding: 0; }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.8); color: #fff; padding: 10px 20px;
+            border-radius: 50px; z-index: 10000; font-family: 'Tajawal', sans-serif;
+            opacity: 0; transition: 0.3s; pointer-events: none;
+        }
+        .toast.show { opacity: 1; top: 80px; }
+
+        /* Modals */
+        .result-modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 12, 41, 0.95); backdrop-filter: blur(10px); z-index: 200; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .big-score { font-size: 5rem; font-weight: 900; color: var(--accent-primary); text-shadow: 0 0 30px var(--accent-primary); }
+        #activation-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-dark); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; backdrop-filter: blur(10px); }
+        .lock-container { background: var(--glass-bg); border: 1px solid var(--glass-border); padding: 40px; border-radius: 25px; text-align: center; box-shadow: var(--card-shadow); width: 85%; max-width: 350px; position: relative; overflow: hidden; }
+        .lock-container::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 3px; background: var(--accent-primary); animation: scanLine 2s infinite linear; }
+        @keyframes scanLine { 0% {left: -100%} 100% {left: 100%} }
+        #activation-code { width: 100%; padding: 15px; background: rgba(0,0,0,0.3); border: 2px solid var(--glass-border); border-radius: 12px; color: var(--accent-primary); font-size: 1.5rem; text-align: center; margin: 20px 0; letter-spacing: 5px; font-family: monospace; outline: none; }
+        #activate-btn { width: 100%; padding: 15px; background: linear-gradient(90deg, var(--accent-secondary), var(--accent-primary)); border: none; border-radius: 12px; color: #fff; font-weight: 900; font-size: 1.1rem; cursor: pointer; transition: 0.3s; }
+        .app-footer { position: fixed; bottom: 10px; right: 90px; font-size: 0.6rem; color: var(--text-muted); opacity: 0.5; }
+
+    </style>
+</head>
+<body>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">Message here</div>
+
+    <!-- 1. Activation Screen -->
+    <div id="activation-screen">
+        <div class="lock-container slide-up">
+            <div class="lock-icon" style="font-size:3rem; margin-bottom:15px;">🔒</div>
+            <h2 style="margin-bottom:10px;"></h2>
+            <p style="color:var(--text-muted); font-size:0.9rem;">أدخل كود التفعيل للمتابعة</p>
+            <input type="text" id="activation-code" placeholder="SMZ - XXXX" autocomplete="off" maxlength="15">
+            <button id="activate-btn" onclick="verifyCode()">تفعيل النظام</button>
+            <p id="activation-msg" style="margin-top:15px; height:20px; font-size:0.85rem; font-weight:bold;"></p>
+        </div>
+    </div>
+
+    <!-- 2. Ticker -->
+    <div class="ticker-wrap">
+        <div class="ticker">
+     
+        </div>
+    </div>
+
+    <!-- 3. App Shell -->
+    <div class="app-shell hidden" id="app-shell">
+        
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="brand-logo">H</div>
+            <div class="nav-icon active" onclick="showHome()">🏠</div>
+            <div class="nav-icon" onclick="startQuiz('unit_01')">√</div>
+            <div class="nav-icon" onclick="startQuiz('unit_03')">Σ</div>
+            <div class="nav-icon" onclick="startQuiz('unit_05')">△</div>
+            <div class="nav-icon" onclick="startQuiz('unit_08')">ƒ</div>
+            <div class="nav-icon" style="color:var(--youtube-red)" onclick="openVideoRoom()">▶</div>
+            <div class="nav-icon" onclick="generateOfficialExam()">📄</div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-area">
+            
+            <!-- Dashboard View -->
+            <div id="dashboard-view" class="fade-in">
+                <header class="header-top">
+                    <div>
+                        <h1 style="font-size:1.5rem; font-weight:900;">لوحة التحكم</h1>
+                        <span style="color:var(--text-muted); font-size:0.8rem;">مرحباً </span>
+                    </div>
+                    <div class="user-badge">BEM 2026</div>
+                </header>
+
+                <div class="dashboard-grid">
+                    <!-- Original Cards -->
+                    <div class="card slide-up" style="animation-delay: 0.1s" onclick="startQuiz('unit_01')">
+                        <div class="card-icon-box">√</div>
+                        <div>
+                            <div class="card-title">الأعداد والحساب</div>
+                            <div class="card-sub">تمارين سريعة وإيقاظ الذاكرة</div>
+                        </div>
+                    </div>
+                    <div class="card slide-up" style="animation-delay: 0.2s" onclick="startQuiz('unit_03')">
+                        <div class="card-icon-box">Σ</div>
+                        <div>
+                            <div class="card-title">الحساب الحرفي</div>
+                            <div class="card-sub">المعادلات والمتراجحات</div>
+                        </div>
+                    </div>
+                    <div class="card slide-up" style="animation-delay: 0.3s" onclick="startQuiz('unit_05')">
+                        <div class="card-icon-box">△</div>
+                        <div>
+                            <div class="card-title">الهندسة</div>
+                            <div class="card-sub">فيثاغورس، طالس، المثلثات</div>
+                        </div>
+                    </div>
+                    <div class="card slide-up" style="animation-delay: 0.4s" onclick="startQuiz('unit_08')">
+                        <div class="card-icon-box">ƒ</div>
+                        <div>
+                            <div class="card-title">الدوال</div>
+                            <div class="card-sub">الخطية والتآلفية والتمثيل البياني</div>
+                        </div>
+                    </div>
+
+                    <!-- VIDEO CARD -->
+                    <div class="card card-video slide-up" style="animation-delay: 0.45s; border-color: var(--youtube-red);" onclick="openVideoRoom()">
+                        <div class="card-icon-box pulse">▶</div>
+                        <div>
+                            <div class="card-title" style="color: #ffcccc;">ملخص 20/20 السريع</div>
+                            <div class="card-sub">فيديو تركيز عالي (5 دقائق)</div>
+                        </div>
+                    </div>
+
+                    <!-- NEW OFFICIAL EXAM CARD -->
+                    <div class="card card-official slide-up" style="animation-delay: 0.5s; border: 1px solid #fff;" onclick="generateOfficialExam()">
+                        <div class="card-icon-box">📄</div>
+                        <div>
+                            <div class="card-title">ورقة الامتحان الرسمية</div>
+                            <div class="card-sub">توليد نموذج ذكي + التصحيح</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quiz View -->
+            <div id="quiz-view" class="hidden fade-in">
+                <div class="quiz-stats">
+                    <button onclick="showHome()" style="background:none; border:none; color:var(--text-muted); font-size:1.5rem;">✕</button>
+                    <div class="stat-box">
+                        <span style="font-size:0.8rem; color:var(--text-muted);">النتيجة</span>
+                        <span class="score-val" id="current-score">0</span>
+                    </div>
+                </div>
+                <div class="question-container">
+                    <p style="text-align:center; color:var(--text-muted); margin-bottom:10px;" id="q-progress-text">سؤال 1 من 10</p>
+                    <div class="progress-container"><div class="progress-bar" id="quiz-progress"></div></div>
+                    <div class="q-text" id="question-text">...</div>
+                    <input type="text" id="userInput" class="main-input" placeholder="اكتب الإجابة..." autocomplete="off">
+                    <button class="submit-btn" onclick="checkAnswer()">تأكيد</button>
+                    <div class="feedback-msg" id="feedback" style="text-align:center; height:30px; font-weight:bold; margin-top:10px;"></div>
+                </div>
+            </div>
+
+            <!-- SMART EXAM VIEW (UPDATED FONT) -->
+            <div id="exam-view" class="hidden fade-in" style="height: 100%; padding: 0;">
+                <div id="exam-paper" class="exam-paper">
+                    <!-- Content Injected via JS -->
+                </div>
+                
+                <div class="result-overlay" id="exam-result">
+                    <div style="font-size:5rem; margin-bottom:10px;">🏆</div>
+                    <div class="final-score" id="score-display">00/20</div>
+                    <p id="score-msg" style="font-weight:bold; color:#555; margin-bottom:20px;">نتيجة ممتازة</p>
+                    <button class="btn-exam btn-submit" onclick="hideResult()">عرض التصحيح التفصيلي</button>
+                </div>
+
+                <div class="exam-controls">
+                    <button class="btn-exam btn-cancel" onclick="showHome()">✕ إلغاء</button>
+                    <button class="btn-exam btn-new" onclick="generateOfficialExam()">🔄 نموذج آخر</button>
+                    <button class="btn-exam btn-submit" id="btn-grade" onclick="gradeExam()">✔ تصحيح ومنح النقطة</button>
+                </div>
+            </div>
+
+            <!-- VIDEO ROOM -->
+            <div id="video-room" class="hidden fade-in">
+                <div class="video-container">
+                    <div class="iframe-wrapper">
+                        <iframe id="main-player" 
+                                src="https://www.youtube.com/embed/3xn8qVnVruY?enablejsapi=1&controls=1&rel=0" 
+                                title="YouTube video player" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                allowfullscreen>
+                        </iframe>
+                    </div>
+                    <div class="video-controls">
+                        <button class="v-btn" onclick="showHome()">✕ خروج</button>
+                        <button class="v-btn" onclick="toggleFocusMode()">👁️ وضع التركيز</button>
+                    </div>
+                    <div class="active-learning-overlay" id="quiz-overlay">
+                        <div style="font-size:1.2rem; color:var(--accent-primary); margin-bottom:10px;">⚠️ توقف! سؤال سريع</div>
+                        <div class="al-question" id="al-q-text">ما هي قيمة cos(0°)؟</div>
+                        <div class="al-timer" id="al-timer">10</div>
+                        <input type="text" id="al-input" class="al-input" placeholder="الإجابة...">
+                        <button class="submit-btn" onclick="submitActiveLearning()" style="width:200px; margin-top:10px;">إجابة</button>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Result Modal -->
+    <div id="result-modal" class="result-modal hidden">
+        <h1 style="color:#fff; margin-bottom:10px;">نتيجة التحدي</h1>
+        <div class="big-score" id="final-score-display">0/10</div>
+        <p id="final-msg" style="color:var(--text-muted); margin-bottom:30px;">رسالة التحفيز</p>
+        <button class="submit-btn" onclick="showHome()" style="width:auto; padding: 15px 40px;">العودة للقائمة</button>
+    </div>
+
+    <div class="app-footer">DESIGNED BY DR. CHOUIDIRA MOHAMED</div>
+
+    <script>
+        // =========================================
+        // DATABASE (EXPANDED)
+        // =========================================
+        const DB = {
+            unit_01: [
+                {q:"PGCD(120, 48)?", a:"24"}, {q:"بسط √18", a:"3√2"}, {q:"قيمة √144", a:"12"}, {q:"هل 15 و 28 أوليان؟", a:"نعم"}, 
+                {q:"بسط √75", a:"5√3"}, {q:"حل x² = 25", a:"5"}, {q:"مقلوب العدد √2", a:"√2/2"}, {q:"بسط √20 + √45", a:"5√5"}, 
+                {q:"نطق مقام 1/√5", a:"√5/5"}, {q:"PGCD(81, 27)", a:"27"}, {q:"بسط √200", a:"10√2"}, {q:"اكتب 5√2 على شكل جذر", a:"√50"},
+                {q:"PGCD(50, 45)", a:"5"}, {q:"هل 13 عددا أوليا؟", a:"نعم"}, {q:"قيمة √0.25", a:"0.5"}, {q:"بسط √32", a:"4√2"}
+            ],
+            unit_03: [
+                {q:"انشر (x+3)²", a:"x²+6x+9"}, {q:"حل 3x = 12", a:"4"}, {q:"انشر (x-2)(x+2)", a:"x²-4"}, {q:"بسط: 5x + 2x - x", a:"6x"}, 
+                {q:"حل x + 9 = 4", a:"-5"}, {q:"تحليل: x² + 2x", a:"x(x+2)"}, {q:"حل المتراجحة 2x > 4", a:"x>2"}, {q:"قيمة 2x² عند x=3", a:"18"}, 
+                {q:"حل 4x = 2", a:"0.5"}, {q:"انشر (x-4)²", a:"x²-8x+16"}, {q:"حل 5x + 1 = 3x + 9", a:"4"}, {q:"انشر 2(x-5)", a:"2x-10"},
+                {q:"حل -3x = 15", a:"-5"}, {q:"بسط 3x - 5x", a:"-2x"}, {q:"مربع 3x هو", a:"9x²"}
+            ],
+            unit_05: [
+                {q:"فيثاغورس: AB=6, AC=8, BC=؟", a:"10"}, {q:"Cos(0°)", a:"1"}, {q:"Sin(30°)", a:"0.5"}, {q:"مجموع زوايا المربع؟", a:"360"}, 
+                {q:"الوتر في المثلث القائم هو...", a:"الأطول"}, {q:"مساحة الدائرة: π × ...²", a:"نصف القطر"}, {q:"Cos²x + Sin²x =", a:"1"}, {q:"Tan(45°)", a:"1"}, 
+                {q:"قطر الدائرة المحيطة بمثلث قائم هو...", a:"الوتر"}, {q:"الزاوية المنفرجة أكبر من...", a:"90"}, {q:"Sin(90°)", a:"1"}, {q:"Cos(90°)", a:"0"},
+                {q:"مجموع زوايا المثلث؟", a:"180"}, {q:"قاعدة طالس: AB/AC = .../...", a:"AD/AE"}, {q:"نصف قطر الدائرة = نصف ...", a:"القطر"}
+            ],
+            unit_08: [
+                {q:"f(x)=3x هي دالة...", a:"خطية"}, {q:"f(x)=2x+5 هي دالة...", a:"تآلفية"}, {q:"صورة 2 بالدالة f(x)=4x", a:"8"}, {q:"معامل الدالة f(x)=-x", a:"-1"}, 
+                {q:"f(0) في الدالة الخطية =", a:"0"}, {q:"صورة 1 بـ f(x)=x+3", a:"4"}, {q:"ميل الدالة f(x)=2x-1", a:"2"}, {q:"تمثيل الدالة الخطية يمر بـ...", a:"المبدأ"}, 
+                {q:"صورة -3 بـ f(x)=2x", a:"-6"}, {q:"إذا كان f(2)=6 في خطية فالدالة f(x)=", a:"3x"}, {q:"الدالة f(x)=x² تسمى...", a:"تربيعية"}, {q:"صورة 0 بـ f(x)=2x+1", a:"1"},
+                {q:"الدالة الثابتة لها ميل...", a:"0"}, {q:"حل f(x)=0 بـ f(x)=x-3", a:"3"}, {q:"إذا كان a>0 فالدالة الخطية...", a:"تزايدية"}
+            ],
+            video_questions: [ 
+                {q:"ما هي قيمة cos(0°)؟", a:"1"}, {q:"نقطة تقاطع y=2x مع المحور الصادي؟", a:"0"}, {q:"الجذر التربيعي للعدد 16 هو؟", a:"4"},
+                {q:"حل المعادلة 3x = 9", a:"3"}, {q:"مجموع زوايا المثلث؟", a:"180"}
+            ]
+        };
+
+        let currentState = {
+            mode: 'dashboard',
+            score: 0,
+            currentIdx: 0,
+            totalQ: 10,
+            questions: [],
+            videoTimer: null,
+            isFocusMode: false,
+            examModel: null // To store current exam data
+        };
+
+        // Utility: Toast
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        // =========================================
+        // SMART EXAM GENERATOR LOGIC (UPDATED)
+        // =========================================
+        function generateOfficialExam() {
+            document.getElementById('dashboard-view').classList.add('hidden');
+            document.getElementById('quiz-view').classList.add('hidden');
+            document.getElementById('video-room').classList.add('hidden');
+            document.getElementById('exam-view').classList.remove('hidden');
+            document.getElementById('exam-result').classList.remove('active');
+            document.getElementById('btn-grade').style.display = 'flex';
+
+            // 1. Random Selection Logic
+            // Pick 3 from Num, 3 from Alg, then mix Geo/Func
+            const getQs = (cat, n) => [...DB[cat]].sort(() => 0.5 - Math.random()).slice(0, n);
+            
+            const paper = document.getElementById('exam-paper');
+            const modelNum = Math.floor(Math.random() * 5000) + 1000; 
+            const dateStr = new Date().toLocaleDateString('ar-DZ');
+
+            let html = `
+                <div class="official-header">
+                    <div class="official-title">امتحان الرياضيات - الشهادة المتوسطة</div>
+                    <div class="official-subtitle">النموذج رقم: ${modelNum} | التاريخ: ${dateStr}</div>
+                    <div class="official-meta">
+                        <span>المادة: الرياضيات</span>
+                        <span>المعامل: 1</span>
+                        <span>المدة: ساعتين</span>
+                    </div>
+                </div>
+            `;
+
+            currentState.examModel = [];
+            let globalIndex = 0;
+
+            // Ex 01: Always Numbers (3 questions = 6 points)
+            const ex1Qs = getQs('unit_01', 3);
+            html += buildExerciseHTML(1, "الأعداد والحساب", ex1Qs);
+            currentState.examModel.push(...ex1Qs);
+
+            // Ex 02: Always Algebra (3 questions = 6 points)
+            const ex2Qs = getQs('unit_03', 3);
+            html += buildExerciseHTML(2, "الحساب الحرفي", ex2Qs);
+            currentState.examModel.push(...ex2Qs);
+
+            // Random choice for Ex 03 and 04 (2 questions each = 8 points)
+            const isGeoFirst = Math.random() > 0.5;
+
+            if(isGeoFirst) {
+                const ex3Qs = getQs('unit_05', 2);
+                html += buildExerciseHTML(3, "الهندسة", ex3Qs);
+                currentState.examModel.push(...ex3Qs);
+
+                const ex4Qs = getQs('unit_08', 2);
+                html += buildExerciseHTML(4, "الدوال والتنظيم البياني", ex4Qs);
+                currentState.examModel.push(...ex4Qs);
+            } else {
+                const ex3Qs = getQs('unit_08', 2);
+                html += buildExerciseHTML(3, "الدوال والتنظيم البياني", ex3Qs);
+                currentState.examModel.push(...ex3Qs);
+
+                const ex4Qs = getQs('unit_05', 2);
+                html += buildExerciseHTML(4, "الهندسة", ex4Qs);
+                currentState.examModel.push(...ex4Qs);
+            }
+
+            paper.innerHTML = html;
+            paper.scrollTop = 0;
+        }
+
+        function buildExerciseHTML(num, title, questions) {
+            let html = `
+                <div class="exercise-section">
+                    <div class="exercise-header">
+                        <span>التمرين ${num}: ${title}</span>
+                        <span class="exercise-badge">${questions.length * 2} ن</span>
+                    </div>
+            `;
+            
+            // Need current global count to generate unique IDs
+            const currentCount = currentState.examModel.length;
+
+            questions.forEach((q, idx) => {
+                const globalIdx = currentCount + idx + 1; 
+                html += `
+                    <div class="question-row">
+                        <div class="q-number">${idx + 1}.</div>
+                        <div class="q-text">${q.q} = </div>
+                        <input type="text" class="exam-input" id="in-${globalIdx}" data-ans="${q.a}" autocomplete="off">
+                        <div class="feedback-box" id="fb-${globalIdx}"></div>
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+            return html;
+        }
+
+        function gradeExam() {
+            const inputs = document.querySelectorAll('.exam-input');
+            let score = 0;
+            const total = currentState.examModel.length * 2; // 2 points per question
+            let allAnswered = true;
+
+            inputs.forEach(input => {
+                if(input.value.trim() === "") allAnswered = false;
+            });
+
+            if(!allAnswered) {
+                if(!confirm("بعض الأسئلة لم يتم الإجابة عليها. هل تريد المتابعة في التصحيح؟")) return;
+            }
+
+            inputs.forEach(input => {
+                const id = input.id;
+                const feedback = document.getElementById(id.replace('in', 'fb'));
+                const correctVal = input.dataset.ans.trim().toLowerCase().replace(/\s+/g, '');
+                const userVal = input.value.trim().toLowerCase().replace(/\s+/g, '');
+
+                input.disabled = true; // Lock inputs
+                
+                // Matching Logic
+                let isCorrect = false;
+                if (userVal === correctVal) isCorrect = true;
+                else if (correctVal.includes(userVal) && userVal.length > 0) {
+                    if(Math.abs(correctVal.length - userVal.length) < 3) isCorrect = true;
+                }
+
+                if (isCorrect) {
+                    score += 2;
+                    input.classList.add('input-correct');
+                    feedback.innerHTML = `<span class="correct-text">✔</span>`;
+                } else {
+                    input.classList.add('input-wrong');
+                    feedback.innerHTML = `<span class="wrong-text">✘ ${input.dataset.ans}</span>`;
+                }
+            });
+
+            // Show Result Overlay
+            document.getElementById('score-display').innerHTML = `${score}<span>/20</span>`;
+            
+            const msg = document.getElementById('score-msg');
+            if(score === 20) msg.innerText = "ممتاز! 20/20 🌟";
+            else if(score >= 16) msg.innerText = "جيد جداً ✨";
+            else if(score >= 10) msg.innerText = "مقبول، تحتاج لمراجعة 💪";
+            else msg.innerText = "يجب عليك المراجعة 📚";
+
+            document.getElementById('exam-result').classList.add('active');
+            document.getElementById('btn-grade').style.display = 'none'; // Hide submit button
+        }
+
+        function hideResult() {
+            document.getElementById('exam-result').classList.remove('active');
+        }
+
+        // =========================================
+        // VIDEO & QUIZ LOGIC (Existing)
+        // =========================================
+        function openVideoRoom() {
+            document.getElementById('dashboard-view').classList.add('hidden');
+            document.getElementById('quiz-view').classList.add('hidden');
+            document.getElementById('exam-view').classList.add('hidden');
+            document.getElementById('video-room').classList.remove('hidden');
+            if(currentState.videoTimer) clearInterval(currentState.videoTimer);
+            currentState.videoTimer = setTimeout(triggerActiveLearning, 30000); 
+        }
+
+        function triggerActiveLearning() {
+            const overlay = document.getElementById('quiz-overlay');
+            const qObj = DB.video_questions[Math.floor(Math.random() * DB.video_questions.length)];
+            document.getElementById('al-q-text').innerText = qObj.q;
+            document.getElementById('al-input').value = '';
+            document.getElementById('al-input').dataset.ans = qObj.a;
+            overlay.classList.add('active');
+            
+            let time = 15;
+            const timerEl = document.getElementById('al-timer');
+            timerEl.innerText = time;
+            
+            const interval = setInterval(() => {
+                time--;
+                timerEl.innerText = time;
+                if(time <= 0) {
+                    clearInterval(interval);
+                    submitActiveLearning(true); 
+                }
+            }, 1000);
+            document.getElementById('al-input').dataset.interval = interval;
+        }
+
+        function submitActiveLearning(isTimeout = false) {
+            const overlay = document.getElementById('quiz-overlay');
+            const input = document.getElementById('al-input');
+            const correct = input.dataset.ans;
+            clearInterval(input.dataset.interval);
+            
+            if(!isTimeout) {
+                const userVal = input.value.trim().replace(/\s+/g, '');
+                if(userVal == correct || correct.includes(userVal)) {
+                    showToast("✅ إجابة صحيحة! استمر");
+                } else {
+                    showToast("❌ الإجابة: " + correct);
+                }
+            } else {
+                showToast("⏱️ انتهى الوقت! " + correct);
+            }
+            overlay.classList.remove('active');
+            if(currentState.videoTimer) clearTimeout(currentState.videoTimer);
+            currentState.videoTimer = setTimeout(triggerActiveLearning, 60000); 
+        }
+
+        function toggleFocusMode() {
+            currentState.isFocusMode = !currentState.isFocusMode;
+            const body = document.body;
+            if(currentState.isFocusMode) {
+                body.classList.add('focus-mode-active');
+            } else {
+                body.classList.remove('focus-mode-active');
+            }
+        }
+
+        function showHome() {
+            document.getElementById('dashboard-view').classList.remove('hidden');
+            document.getElementById('quiz-view').classList.add('hidden');
+            document.getElementById('video-room').classList.add('hidden');
+            document.getElementById('exam-view').classList.add('hidden');
+            document.getElementById('result-modal').classList.add('hidden');
+            document.body.classList.remove('focus-mode-active');
+            currentState.isFocusMode = false;
+            if(currentState.videoTimer) clearTimeout(currentState.videoTimer);
+        }
+
+        function startQuiz(unit) {
+            currentState.mode = 'quiz';
+            currentState.score = 0;
+            currentState.currentIdx = 0;
+            currentState.totalQ = 10;
+            currentState.questions = [...DB[unit]].sort(() => 0.5 - Math.random()).slice(0, 10);
+
+            document.getElementById('dashboard-view').classList.add('hidden');
+            document.getElementById('video-room').classList.add('hidden');
+            document.getElementById('exam-view').classList.add('hidden');
+            document.getElementById('quiz-view').classList.remove('hidden');
+            renderQuizQuestion();
+        }
+
+        function renderQuizQuestion() {
+            const q = currentState.questions[currentState.currentIdx];
+            document.getElementById('current-score').innerText = currentState.score;
+            document.getElementById('q-progress-text').innerText = `سؤال ${currentState.currentIdx + 1} من ${currentState.totalQ}`;
+            document.getElementById('question-text').innerText = q.q;
+            document.getElementById('userInput').value = '';
+            document.getElementById('feedback').innerText = '';
+            document.getElementById('userInput').focus();
+            const pct = ((currentState.currentIdx) / currentState.totalQ) * 100;
+            document.getElementById('quiz-progress').style.width = `${pct}%`;
+        }
+
+        function checkAnswer() {
+            const userIn = document.getElementById('userInput').value.trim().replace(/\s+/g, '').toLowerCase();
+            const correct = currentState.questions[currentState.currentIdx].a.replace(/\s+/g, '').toLowerCase();
+            const feedback = document.getElementById('feedback');
+
+            if (navigator.vibrate) navigator.vibrate(50);
+
+            // Flexible matching
+            const isCorrect = (correct.includes(userIn) && userIn.length > 0) || (userIn === correct);
+
+            if (isCorrect) {
+                currentState.score++;
+                feedback.innerText = "أحسنت! ✨";
+                feedback.style.color = "var(--success)";
+                if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+            } else {
+                feedback.innerText = `خطأ! الإجابة: ${currentState.questions[currentState.currentIdx].a}`;
+                feedback.style.color = "var(--danger)";
+                const inputZone = document.querySelector('.input-zone');
+                if(inputZone) {
+                    inputZone.style.animation = "shake 0.4s";
+                    setTimeout(() => inputZone.style.animation = "none", 400);
+                }
+            }
+
+            currentState.currentIdx++;
+            if (currentState.currentIdx < currentState.totalQ) {
+                setTimeout(renderQuizQuestion, 1500);
+            } else {
+                setTimeout(showResults, 1500);
+            }
+        }
+
+        function showResults() {
+            document.getElementById('quiz-view').classList.add('hidden');
+            document.getElementById('result-modal').classList.remove('hidden');
+            const scoreEl = document.getElementById('final-score-display');
+            const msgEl = document.getElementById('final-msg');
+            scoreEl.innerText = `${currentState.score}/${currentState.totalQ}`;
+            const ratio = currentState.score / currentState.totalQ;
+            if (ratio === 1) msgEl.innerText = "ممتاز! أنت عبقري رياضيات 🌟";
+            else if (ratio >= 0.8) msgEl.innerText = "عمل رائع جداً! 🔥";
+            else if (ratio >= 0.5) msgEl.innerText = "جيد، لكن يمكنك الأفضل 💪";
+            else msgEl.innerText = "لا تستسلم، حاول مرة أخرى 🧠";
+        }
+
+        // Activation
+        window.onload = function() {
+            if (localStorage.getItem('hunter_math_activated')) {
+                document.getElementById('activation-screen').style.display = 'none';
+                document.getElementById('app-shell').classList.remove('hidden');
+            } else {
+                document.getElementById('app-shell').classList.add('hidden');
+            }
+        };
+        
+        function verifyCode() {
+             const input = document.getElementById('activation-code').value.trim().toUpperCase();
+             if(input === "ADMIN") {
+                localStorage.setItem('hunter_math_activated', 'true');
+                document.getElementById('activation-screen').style.display = 'none';
+                document.getElementById('app-shell').classList.remove('hidden');
+             } else {
+                 document.getElementById('activation-msg').style.color = "var(--danger)";
+                 document.getElementById('activation-msg').innerText = "كود غير صالح";
+             }
+        }
+        
+        document.getElementById('userInput').addEventListener('keypress', function (e) { if (e.key === 'Enter') checkAnswer(); });
+
+    </script>
+</body>
+</html>
